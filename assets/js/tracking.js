@@ -45,7 +45,10 @@
     fbq("track", "PageView");
   }
   if (cfg.LINKEDIN_PARTNER_ID) {
+    window._linkedin_partner_id = cfg.LINKEDIN_PARTNER_ID;
     window._linkedin_data_partner_ids = [cfg.LINKEDIN_PARTNER_ID];
+    window.lintrk = window.lintrk || function (a, b) { window.lintrk.q.push([a, b]); };
+    window.lintrk.q = window.lintrk.q || [];
     load("https://snap.licdn.com/li.lms-analytics/insight.min.js");
   }
   if (cfg.TIKTOK_PIXEL_ID) {
@@ -56,15 +59,31 @@
       ttq.load(cfg.TIKTOK_PIXEL_ID); ttq.page(); }(window, document, "ttq");
   }
 
-  /* ---- 3) API única de eventos (dataLayer + gtag + Meta + TikTok) ---- */
+  if (cfg.HOTJAR_ID) {
+    (function (h, o, t, j, a, r) { h.hj = h.hj || function () { (h.hj.q = h.hj.q || []).push(arguments); };
+      h._hjSettings = { hjid: +cfg.HOTJAR_ID, hjsv: 6 }; a = o.getElementsByTagName("head")[0];
+      r = o.createElement("script"); r.async = 1; r.src = t + h._hjSettings.hjid + j + h._hjSettings.hjsv; a.appendChild(r);
+    })(window, document, "https://static.hotjar.com/c/hotjar-", ".js?sv=");
+  }
+
+  /* ---- 3) API única de eventos (dataLayer + GA4 + Google Ads + Meta + LinkedIn + TikTok) ---- */
   function event(name, data) {
     data = Object.assign({}, params, data || {});
     window.dataLayer.push(Object.assign({ event: name }, data));
-    if (window.gtag && !cfg.GTM_ID) gtag("event", name, data);
-    var map = (cfg.EVENT_MAP || {})[name];
-    if (map && window.fbq) fbq("track", map.meta || "Lead", data);
-    if (map && window.ttq && map.tiktok) ttq.track(map.tiktok, data);
-    if (cfg.DEBUG) console.log("[LPTrack]", name, data);
+    var map = (cfg.EVENT_MAP || {})[name] || {};
+    if (window.gtag && !cfg.GTM_ID) {
+      gtag("event", map.ga4 || name, data);
+      if (map.google_ads && cfg.GOOGLE_ADS_ID) {
+        gtag("event", "conversion", { send_to: map.google_ads, value: data.value, currency: data.currency, transaction_id: data.event_id });
+      }
+    }
+    if (map.meta && window.fbq) {
+      var opts = data.event_id ? { eventID: data.event_id } : undefined; // deduplicação com CAPI
+      fbq(map.meta === "Contact" || map.meta === "Lead" ? "track" : "trackCustom", map.meta, data, opts);
+    }
+    if (map.linkedin && window.lintrk) window.lintrk("track", { conversion_id: map.linkedin });
+    if (map.tiktok && window.ttq) ttq.track(map.tiktok, data);
+    if (cfg.DEBUG) console.log("[LPTrack]", name, data, map);
   }
   window.LPTrack = { event: event, attribution: function () { return read(); } };
   window.dataLayer.push(Object.assign({ event: "lp_attribution_ready" }, params));
