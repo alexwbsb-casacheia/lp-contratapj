@@ -1,4 +1,4 @@
-﻿# LP ContrataPJ — campanha
+# LP ContrataPJ — campanha
 
 Cópia estática da LP de contratapj.com.br, com a estrutura de tracking da agência.
 No ar em https://lpb.contratapj.app.br
@@ -22,15 +22,9 @@ Eventos enviados: `lead_form_open`, `lead_form_submit` (Lead), `whatsapp_redirec
 As UTMs e os IDs de clique (gclid, fbclid etc.) ficam salvos em `localStorage.lp_attribution` (primeiro e último acesso).
 Para testar, coloque `DEBUG: true` na configuração e veja o console.
 
-## Formulário de lead → planilha
-Qualquer link do WhatsApp abre antes um formulário com nome, empresa, telefone e quantidade de PJs.
-Quando a pessoa envia:
-1. Os dados vão para a aba "Leads - LP" da planilha "Leads - Contrata PJ" (`SHEETS_ENDPOINT`, app da Web do Apps Script).
-2. Dispara a conversão: Meta `Lead` (com eventID e correspondência avançada), GA4 `generate_lead`, Google Ads e LinkedIn (se o rótulo estiver no `EVENT_MAP`).
-3. A pessoa segue para o mesmo link do WhatsApp, com `Contact` no Meta.
-
-O código do script está em `apps-script/Codigo.gs` (projeto "LP ContrataPJ - Leads para planilha" no Apps Script).
-Depois de mudar o código, publique em Implantar → Gerenciar implantações → Editar → Nova versão, mantendo a mesma URL.
+## Atendimento direto pelo WhatsApp
+Todos os CTAs de atendimento abrem diretamente o WhatsApp `5521999508940`, sem modal ou formulário intermediário.
+A mensagem padrão já está configurada nos links da página. O `tracking.js` registra o evento `whatsapp_click` (Meta `Contact` e GA4 `whatsapp_click`) e preserva UTMs/IDs de clique para atribuição. A coleta de dados em formulário/planilha foi desativada nesta LP.
 
 ## Publicação
 Hospedada no GitHub Pages, a partir da branch `main` e da pasta raiz. O domínio (lpb.contratapj.app.br) está no arquivo `CNAME`.
